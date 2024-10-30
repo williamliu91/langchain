@@ -6,6 +6,37 @@ from langchain_groq import ChatGroq
 from gtts import gTTS
 import tempfile
 import PyPDF2
+import base64
+
+# Function to load the image and convert it to base64
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+# Path to the locally stored QR code image
+qr_code_path = "qrcode.png"  # Ensure the image is in your app directory
+
+# Convert image to base64
+qr_code_base64 = get_base64_of_bin_file(qr_code_path)
+
+# Custom CSS to position the QR code close to the top-right corner under the "Deploy" area
+st.markdown(
+    f"""
+    <style>
+    .qr-code {{
+        position: fixed;  /* Keeps the QR code fixed in the viewport */
+        top: 10px;       /* Sets the distance from the top of the viewport */
+        right: 10px;     /* Sets the distance from the right of the viewport */
+        width: 200px;    /* Adjusts the width of the QR code */
+        z-index: 100;    /* Ensures the QR code stays above other elements */
+    }}
+    </style>
+    <img src="data:image/png;base64,{qr_code_base64}" class="qr-code">
+    """,
+    unsafe_allow_html=True
+)
+
 
 # Access your secret key
 with open('secret.txt') as f:
