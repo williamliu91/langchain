@@ -4,10 +4,8 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 from gtts import gTTS
-import speech_recognition as sr
 import tempfile
 import PyPDF2
-import io
 
 # Access your secret key
 with open('secret.txt') as f:
@@ -56,28 +54,6 @@ def extract_text_from_pdf(pdf_file):
         st.error(f"Error reading PDF: {e}")
         return None
 
-# Function to convert speech to text
-def speech_to_text():
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.info("🎤 Listening... Speak now!")
-        try:
-            audio = r.listen(source, timeout=5)
-            st.info("Processing speech...")
-            text = r.recognize_google(audio)
-            st.session_state.recorded_text = text
-            st.success("Voice recorded successfully!")
-            return text
-        except sr.WaitTimeoutError:
-            st.error("No speech detected within timeout period")
-            return None
-        except sr.UnknownValueError:
-            st.error("Could not understand audio")
-            return None
-        except sr.RequestError as e:
-            st.error(f"Could not request results; {e}")
-            return None
-
 # Function to convert text to speech
 def text_to_speech(text, language):
     try:
@@ -89,16 +65,16 @@ def text_to_speech(text, language):
         st.error(f"Error generating speech: {e}")
         return None
 
-# Task 1: Get input text (file upload, typing, or voice)
+# Function to clean text by removing extra spaces and newlines
 def clean_text(text):
-    # Remove extra spaces and newlines
     cleaned_text = ' '.join(text.split())
     return cleaned_text
 
+# Task 1: Get input text (file upload or typing)
 def get_input_text():
     st.title("Text Translation with Voice")
     
-    input_method = st.radio("Choose input method:", ["Upload File", "Type Text", "Voice Input"])
+    input_method = st.radio("Choose input method:", ["Upload File", "Type Text"])
     
     if input_method == "Upload File":
         file_type = st.radio("Select file type:", ["Text File (.txt)", "PDF File (.pdf)"])
@@ -119,27 +95,6 @@ def get_input_text():
     
     elif input_method == "Type Text":
         return st.text_area("Enter text:", height=200)
-    
-    else:  # Voice Input
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Start Recording"):
-                text = speech_to_text()
-                if text:
-                    st.write("Transcribed text:")
-                    st.write(text)
-                    return text
-        with col2:
-            if st.session_state.recorded_text:
-                if st.button("Clear Recording"):
-                    st.session_state.recorded_text = None
-                    st.rerun()
-        
-        # Display previously recorded text
-        if st.session_state.recorded_text:
-            st.write("Currently recorded text:")
-            st.write(st.session_state.recorded_text)
-            return st.session_state.recorded_text
     
     return None
 
@@ -168,7 +123,7 @@ def main():
     input_text = get_input_text()
     
     # Proceed with translation if we have input text
-    if input_text or st.session_state.recorded_text:
+    if input_text:
         st.write("Select languages for translation:")
         col1, col2 = st.columns(2)
         with col1:
@@ -176,8 +131,7 @@ def main():
         with col2:
             target_language = st.selectbox("To:", [lang for lang in LANGUAGES.keys() if lang != source_language])
 
-        # Use either input_text or recorded_text
-        text_to_translate = input_text if input_text else st.session_state.recorded_text
+        text_to_translate = input_text
 
         if st.button("Translate"):
             if text_to_translate and text_to_translate.strip():
