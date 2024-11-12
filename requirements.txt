@@ -4,4 +4,4 @@ langchain_groq==0.2.0
 Pillow==11.0.0
 PyPDF2==3.0.1
 SpeechRecognition==3.10.4
-pydub==0.25.1
+streamlit-webrtc==0.46.0
